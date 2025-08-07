@@ -1,18 +1,25 @@
-const db = require('./app/models');
 const utils = require('./app/utils');
 const whatsapp = utils.whatsapp;
+const cron = require('node-cron');
+const sheets = utils.fetchData;
 
-const controllers = require('./app/controllers')
-const Polis = controllers.Polis;
-const Schedules = controllers.Schedules;
+const pullData = async () => {
+    await sheets.fetchData("Tarif", 'tarif');
+    await sheets.fetchData("Edukasi Penyakit", 'edukasi_penyakit');
+    await sheets.fetchData("Pengumuman", 'pengumuman');
+    const time = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+    const message = `📌 Tarik data Google Sheets berhasil dijalankan pada ${time}.`;
 
-db.sequelize.sync();
+    console.log(`[${time}] ✅ Tarik data Google Sheets selesai`);
+    await whatsapp.sendAdminMessage(message);
+}
+
+main();
+
+// db.sequelize.sync();
+cron.schedule('0 */6 * * *', pullData, { timezone: 'Asia/Jakarta' });
 whatsapp.makeWhatsappSocket();
 
-// async function main() {
-//     // const p = await Polis.get();
-//     const p = await Schedules.get("P001")
-//     console.log(p);
-// }
-
-// main();
+async function main() {
+    await pullData();
+}
