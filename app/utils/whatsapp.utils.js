@@ -17,6 +17,8 @@ const Schedules = controllers.Schedules;
 const Mcus = controllers.Mcus;
 const PriceMcu = controllers.PriceMcu;
 
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
 let globalSock = null;
 
 const makeWhatsappSocket = async () => {
@@ -88,6 +90,35 @@ const sendAdminMessage = async (text) => {
         console.log("✅ Notifikasi admin terkirim");
     } catch (err) {
         console.error("❌ Gagal kirim notifikasi ke admin:", err);
+    }
+}
+
+const sendWebhookMessage = async (text, number) => {
+    if (!globalSock) return console.log("Whatsapp Socket belum siap");
+    const adminNumber = `62${number.slice(1)}@c.us`;
+    try {
+        await globalSock.sendMessage(adminNumber, { text });
+    } catch (e) {
+        console.error("❌ Gagal kirim notifikasi ke admin:", err);
+    }
+}
+
+const sendNotificationsCalib = async (text, phones, delayMs = 300) => {
+    if (!globalSock) return console.log("Whatsapp Socket belum siap");
+    const results = [];
+    for (const phone of phones) {
+        let number = `62${phone.phone.slice(1)}@c.us`;
+        let prononuce = phone.prononuce === "He" ? "Bapak" : "Ibu";
+        console.log(number);
+        try {
+            const res = await globalSock.sendMessage(number, { text: `Selamat Pagi ${prononuce} ${phone.name},\n${text}` });
+            results.push({ phone, ok: true, res });
+            await sleep(delayMs);
+        } catch (e) {
+            console.error('Send error', phone, err.message || err);
+            results.push({ phone, ok: false, error: err.message || String(err) });
+            await sleep(500);
+        }
     }
 }
 
@@ -189,8 +220,11 @@ async function handleChatMessage(text, socket, from) {
     }
 
     // 🟡 Fallback / catch-all response
-    await socket.sendMessage(from, { text: `🏥 Halo, saya dengan SIWA asisten whatsapp RSUD Cikalongwetan, untuk membuka menu silakan ketik /menu ya` });
+    // await sendListMessage(from, socket);
 
+    await socket.sendMessage(from, {
+        text: `🏥 Halo, saya dengan SIWA asisten whatsapp RSUD Cikalongwetan, untuk membuka menu silakan ketik /menu ya`,
+    });
 }
 
 function swGreetings(text) {
@@ -600,4 +634,4 @@ function changeToBullet(text) {
     return finalText;
 }
 
-module.exports = { makeWhatsappSocket, sendAdminMessage }
+module.exports = { makeWhatsappSocket, sendAdminMessage, sendWebhookMessage, sendNotificationsCalib }
