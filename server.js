@@ -57,7 +57,7 @@ const pullData = async () => {
 const checkCalib = async () => {
     // console.log("test cron calib")
     try {
-        await axios.get('http://192.168.1.9/calib-app/kalibrasi/getClosestDate',
+        await axios.get('http://192.168.31.122/calib-app/kalibrasi/getClosestDate',
             {
                 headers: { 'X-INTERNAL-SECRET': process.env.INTERNAL_SECRET }
             }
@@ -82,7 +82,7 @@ const checkCalib = async () => {
 // main();
 
 cron.schedule('0 */6 * * *', pullData, { timezone: 'Asia/Jakarta' });
-cron.schedule('0 9 * * *', checkCalib, { timezone: 'Asia/Jakarta' });
+cron.schedule('45 9 * * *', checkCalib, { timezone: 'Asia/Jakarta' });
 
 whatsapp.makeWhatsappSocket();
 
